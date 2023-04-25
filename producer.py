@@ -17,7 +17,6 @@ class Producer:
             reader = csv.reader(file)
             headings = next(reader)
             # print(headings)
-
             for i, row in enumerate(reader):
                 data = {
                     "index": i,
@@ -26,10 +25,11 @@ class Producer:
                 self.producer.send(self.topicName, json.dumps(data).encode("utf-8"))
                 print(data)
                 time.sleep(1)
-
             # 데이터를 모두 보낸 후 종료 신호 보내기
-
-            self.producer.send(self.topicName, "DONE".encode("utf-8"))
+            data = {"row": ["DONE"]}
+            self.producer.send(self.topicName, json.dumps(data).encode("utf-8"))
+            print(data)
+        print("Sent done signal, exiting...")
 
 
 if __name__ == '__main__':

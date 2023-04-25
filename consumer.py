@@ -12,49 +12,40 @@ class Consumer:
             bootstrap_servers=brokers,
             api_version=(0, 11, 5)
         )
-        self.time_limit = 10  # 10초 제한시간 설정
 
     def income_check(self):
         print("Start income check")
-
-        start_time = time.time()  # 시작 시간 기록
-
-        for idx, message in enumerate(self.consumer):
+        new_data = []  # 새로운 데이터 저장
+        for message in self.consumer:
             data = json.loads(message.value.decode())
-
-            # 종료 신호를 받으면 종료
-            if data == "DONE":
-                print("Received done signal, exiting...")
+            # print(data)
+            # 종료 신호인 경우
+            if data["row"][0] == "DONE":
                 break
-
-            index = data['index']
-            row = data['row']
             # income이 $120K 이상인 경우
-            if "$120K +" in str(row[7]):
+            if "$120K +" in str(data["row"][7]):
                 print("--income exceeds $120K")
                 # CLIENTNUM, Customer_Age, Gender, Dependent_count, Education_Level, Marital_Status, Income_Category, Card_Category 정보만 저장
-                new_row = [row[0], row[2], row[3], row[4], row[5], row[6], row[7], row[8]]
-                rows_to_write.append(new_row)
-                print(f'{index}번째 데이터 => {new_row.__str__()}')
+                new_row = [data["row"][0], data["row"][2], data["row"][3], data["row"][4], data["row"][5], data["row"][6], data["row"][7], data["row"][8]]
+                new_data.append(new_row)
+
+                print(f'{data["index"]} {new_row.__str__()}')
+
+                # csv 파일 업데이트
+                file_name = "./high_income_customers.csv"
+                file_path = os.path.join(os.path.dirname(__file__), file_name)
+                with open(file_path, "a", newline='') as f:
+                    writer = csv.writer(f)
+                    if os.stat(file_path).st_size == 0:  # 파일이 비어있으면 헤더 추가
+                        writer.writerow(['CLIENTNUM', 'Customer_Age', 'Gender', 'Dependent_count', 'Education_Level', 'Marital_Status', 'Income_Category', 'Card_Category'])
+                    writer.writerow(new_row)
+
 
         print("End income check")
-
-        print("write to csv file")
-        # 새로운 csv 파일에 쓰기
-        file_name = "./high_income_customers.csv"
-        file_path = os.path.join(os.path.dirname(__file__), file_name)
-        with open(file_path, "w", newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                ['CLIENTNUM', 'Customer_Age', 'Gender', 'Dependent_count', 'Education_Level', 'Marital_Status',
-                 'Income_Category', 'Card_Category'])
-            writer.writerows(rows_to_write)
-        print("write to csv file done")
 
 
 if __name__ == '__main__':
     brokers = ["localhost:9092"]
     topicName = "bank"
     consumer = Consumer(brokers, topicName)
-    rows_to_write = []  # 새로운 csv 파일에 쓸 row 저장
     consumer.income_check()
