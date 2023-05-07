@@ -16,6 +16,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    # command: >
+    #   bash -c "
+    #     kafka-topics --create --topic bank --bootstrap-server localhost:29092 --partitions 1 --replication-factor 1"
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.9
@@ -23,3 +26,16 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+
+  python-kafka:
+    build: 
+      context: ./python-kafka
+      dockerfile: Dockerfile
+    container_name: python-kafka
+    image: python-kafka:1.0
+    volumes:
+      - .:/app
+    depends_on:
+      - broker
+    environment:
+      KAFKA_BROKER: broker:9092

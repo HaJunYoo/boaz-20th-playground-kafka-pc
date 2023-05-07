@@ -1,0 +1,19 @@
+FROM ubuntu:20.04
+
+# Install required packages
+RUN apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+    python3.8 \
+    python3-pip \
+    python3-setuptools \
+    python3.8-distutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Expose Kafka port
+EXPOSE 9092
+
+WORKDIR /app
+COPY . /app
+
+# Install kafka-python
+RUN pip3 install kafka-python
